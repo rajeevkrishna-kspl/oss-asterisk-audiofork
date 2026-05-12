@@ -441,6 +441,7 @@ static int start_audiofork(struct ast_channel *chan, struct ast_audiohook *audio
 	return ast_audiohook_attach(chan, audiohook);
 }
 
+
 static int audiofork_ws_close(struct audiofork *audiofork)
 {
 	int ret;
@@ -448,6 +449,11 @@ static int audiofork_ws_close(struct audiofork *audiofork)
 	if (audiofork->websocket) {
 		ast_verb(2, "[AudioFork] Calling ast_websocket_close\n");
 		ret = ast_websocket_close(audiofork->websocket, 1011);
+
+		/* SAFELY DROP THE SOCKET FROM MEMORY TO FIX CLOSE_WAIT */
+		ao2_ref(audiofork->websocket, -1);
+		audiofork->websocket = NULL;
+
 		return ret;
 	}
 
